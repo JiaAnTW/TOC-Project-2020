@@ -14,7 +14,7 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["user", "state1", "state2"],
+    states=["user", "state1", "state2","state3"],
     transitions=[
         {
             "trigger": "advance",
@@ -24,11 +24,11 @@ machine = TocMachine(
         },
         {
             "trigger": "advance",
-            "source": "user",
+            "source": "state1",
             "dest": "state2",
             "conditions": "is_going_to_state2",
         },
-        {"trigger": "go_back", "source": ["state1", "state2"], "dest": "user"},
+        {"trigger": "go_back", "source": "state2", "dest": "state1"},
     ],
     initial="user",
     auto_transitions=False,
@@ -48,8 +48,8 @@ if channel_access_token is None:
     print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
     sys.exit(1)
 
-line_bot_api = LineBotApi(channel_access_token)
-parser = WebhookParser(channel_secret)
+line_bot_api = LineBotApi("0SLteZR2B5lHmN8jtZrYRLz5kIS9e7YxbG5iJFOsOWTEamfytuROe0T1X5NsjBIf6qjQFVnY4qQjDeKn7ibOSE/U72DQaMyaXE+6FTWGvySNI9JEsJqK3S/xWBi9b46WS7qEIplNTX1SMENaYAT0EgdB04t89/1O/w1cDnyilFU=")
+parser = WebhookParser("34bd103fc030554fd8abb36dac789e33")
 
 
 @app.route("/callback", methods=["POST"])
@@ -102,6 +102,7 @@ def webhook_handler():
             continue
         print(f"\nFSM STATE: {machine.state}")
         print(f"REQUEST BODY: \n{body}")
+        #print(f"User is at: {event}")
         response = machine.advance(event)
         if response == False:
             send_text_message(event.reply_token, "Not Entering any State")
