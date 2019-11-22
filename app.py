@@ -14,23 +14,15 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["user", "state1", "state2","state3"],
+    states=["init", "center", "setClock","setTime"],
     transitions=[
-        {
-            "trigger": "advance",
-            "source": "user",
-            "dest": "state1",
-            "conditions": "is_going_to_state1",
-        },
-        {
-            "trigger": "advance",
-            "source": "state1",
-            "dest": "state2",
-            "conditions": "is_going_to_state2",
-        },
-        {"trigger": "go_back", "source": "state2", "dest": "state1"},
+        { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
+        { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
+        { "trigger": "go_back", "source": "setClock", "dest": "center"},
+        { "trigger": "advance","source": "setClock","dest": "setTime","conditions": "is_going_to_setTime"},
+        { "trigger": "go_back", "source": "setTime", "dest": "setClock"},
     ],
-    initial="user",
+    initial="init",
     auto_transitions=False,
     show_conditions=True,
 )
@@ -103,7 +95,10 @@ def webhook_handler():
         print(f"\nFSM STATE: {machine.state}")
         print(f"REQUEST BODY: \n{body}")
         #print(f"User is at: {event}")
-        response = machine.advance(event)
+        if (event.message.type=="text" and event.message.text=="返回")or machine.state=="setTime":
+            response = machine.go_back(event)
+        else:
+            response = machine.advance(event)
         if response == False:
             send_text_message(event.reply_token, "Not Entering any State")
 
