@@ -1,0 +1,22 @@
+strict digraph "" {
+	開始	 [pos="0,0!",
+		shape=circle];
+	計時器	 [pos="5,2!",
+		shape=circle];
+	開始 -> 計時器;
+	取得目前時間	 [pos="5,-2!",
+		shape=circle];
+	開始 -> 取得目前時間;
+	計時器 -> 取得目前時間;
+	輸入小時	 [pos="15,2!",
+		shape=circle];
+	計時器 -> 輸入小時;
+	輸入分鐘	 [pos="15,0!",
+		shape=circle];
+	計時器 -> 輸入分鐘;
+	輸入秒數	 [pos="15,-2!",
+		shape=circle];
+	計時器 -> 輸入秒數;
+	取得可能點	 [pos="10,0!",
+		shape=circle];
+}
