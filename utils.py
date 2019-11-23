@@ -1,5 +1,6 @@
 import os
-
+from datetime import timedelta
+import time
 from linebot import LineBotApi, WebhookParser
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, TemplateSendMessage
 
@@ -19,6 +20,12 @@ def send_template_message(reply_token, template):
     line_bot_api.reply_message(reply_token, template)
 
     return "OK"
+
+def active_send_text_msg(uid,msg,timer):
+    print("start to wait for "+str(timer))
+    line_bot_api = LineBotApi(channel_access_token)
+    time.sleep(timer.seconds)
+    line_bot_api.push_message(uid, TextSendMessage(text=msg))
 
 """
 def send_image_url(id, img_url):

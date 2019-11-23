@@ -12,15 +12,39 @@ from utils import send_text_message
 
 load_dotenv()
 
+def check_go_back(state,event):
+    goBackStates=["setClock","setTime","setNow","setTarget","clockCenter"]
+    for goBackState in goBackStates:
+        if state == goBackState:
+            if state== "clockCenter" and event.message.text!="結束計時":
+                return False
+            if state == "setClock" and event.message.text != "確定送出":
+                return False
+            return True
+    return False
 
 machine = TocMachine(
-    states=["init", "center", "setClock","setTime"],
+    states=["init", "center", "setClock","clockCenter","setTime","setNumber","setNow","setTarget"],
     transitions=[
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
         { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
         { "trigger": "go_back", "source": "setClock", "dest": "center"},
-        { "trigger": "advance","source": "setClock","dest": "setTime","conditions": "is_going_to_setTime"},
-        { "trigger": "go_back", "source": "setTime", "dest": "setClock"},
+
+        { "trigger": "advance","source": "setClock","dest": "clockCenter","conditions": "is_going_to_clockCenter"},
+        { "trigger": "cycle","source": "clockCenter","dest": "clockCenter","conditions": "cycle_in_clockCenter"},
+        { "trigger": "go_back", "source": "clockCenter", "dest": "setClock"},
+
+        { "trigger": "advance","source": "clockCenter","dest": "setTime","conditions": "is_going_to_setTime"},
+        { "trigger": "go_back", "source": "clockCenter", "dest": "setClock"},
+
+        { "trigger": "advance","source": "setClock","dest": "setNumber","conditions": "is_going_to_setNumber"},
+        { "trigger": "go_back", "source": "setNumber", "dest": "setClock"},
+
+        { "trigger": "advance","source": "setNumber","dest": "setNow","conditions": "is_going_to_setNow"},
+        { "trigger": "go_back", "source": "setNow", "dest": "setNumber"},
+
+        { "trigger": "advance","source": "setNumber","dest": "setTarget","conditions": "is_going_to_setTarget"},
+        { "trigger": "go_back", "source": "setTarget", "dest": "setNumber"},
     ],
     initial="init",
     auto_transitions=False,
@@ -94,9 +118,11 @@ def webhook_handler():
             continue
         print(f"\nFSM STATE: {machine.state}")
         print(f"REQUEST BODY: \n{body}")
-        #print(f"User is at: {event}")
-        if (event.message.type=="text" and event.message.text=="返回")or machine.state=="setTime":
+
+        if (event.message.type=="text" and event.message.text=="返回")or check_go_back(machine.state, event):
             response = machine.go_back(event)
+        elif machine.state=="clockCenter" and (event.message.text=="開始計時"):
+            response = machine.cycle(event)
         else:
             response = machine.advance(event)
         if response == False:
@@ -114,3 +140,4 @@ def show_fsm():
 if __name__ == "__main__":
     port = os.environ.get("PORT", 8000)
     app.run(host="0.0.0.0", port=port, debug=True)
+
