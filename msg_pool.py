@@ -2,7 +2,7 @@ from linebot.models import ButtonsTemplate,PostbackTemplateAction,TemplateSendMe
 
 def get_center_msg():
     stateOneTemplate=TemplateSendMessage(
-        alt_text='Buttons Template',
+        alt_text='歡迎使用waku計時器！',
         template=ButtonsTemplate(
             title='歡迎使用waku計時器！',
             text='根據您的需求點選點選下方功能',
@@ -29,7 +29,7 @@ def get_set_clock_msg(timer,number):
     now=str(number['now'])
     target=str(number['target'])
     timeTemplate=TemplateSendMessage(
-        alt_text=' Template',
+        alt_text=' 設定計時器',
         template=ButtonsTemplate(
             title='目前設定為\n每號間隔 '+str(timer)+',由'+now+'號開始等到'+target+'號',
             text='利用下方按鍵開始設定\n設定完成請點選確定',
@@ -79,7 +79,7 @@ def get_set_clockCenter_msg(timer,isCounting):
         topic='目前設定為\n每號間隔 '+str(timer)
 
     timeTemplate=TemplateSendMessage(
-        alt_text=' Template',
+        alt_text=' 設定時間',
         template=ButtonsTemplate(
             title=topic,
             text='利用下方按鍵開始設定\n設定完成請點選確定',
@@ -104,7 +104,7 @@ def get_set_number_msg(number):
     now=str(number['now'])
     target=str(number['target'])
     numberTemplate=TemplateSendMessage(
-        alt_text=' Template',
+        alt_text='設定號碼',
         template=ButtonsTemplate(
             title='您的號碼為 '+target+',目前號碼為 '+now,
             text='利用下方按鍵開始設定\n設定完成請點選確定',

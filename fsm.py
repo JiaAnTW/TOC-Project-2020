@@ -1,7 +1,7 @@
 from transitions.extensions import GraphMachine
 import datetime
 import threading
-from utils import send_text_message, send_template_message,active_send_text_msg
+from utils import *
 from msg_pool import *
 
 
@@ -12,6 +12,17 @@ class TocMachine(GraphMachine):
         self.number={"now":0,"target":0}
         self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0)}
         self.threadPool=[]
+        self.clockPool=[]
+        self.index=0
+
+    def delete_clock_from_pool(self,index):
+        i=0
+        for clock in self.clockPool:
+            if clock['index']==index:
+                self.clockPool.pop(i)
+                return
+            i=i+1
+
 
     # center
     def is_going_to_center(self,*arg):
@@ -40,9 +51,38 @@ class TocMachine(GraphMachine):
         if(event.message.text=="確定送出"):
             msg="設定完成!輪到你的時候會用訊息通知你歐~現在可以再設定新的計時器"
             active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
-            tmp=threading.Thread(target =  active_send_text_msg, args = (event.source.user_id,"排到了歐!",self.timer,self.number))
+            self.clockPool.append({
+                'timer':self.timer,
+                'number':self.number,
+                'clock':self.clock,
+                'index':self.index
+            })
+            tmp=threading.Thread(
+                target =  active_send_clock_msg, 
+                args = (
+                    event.source.user_id,
+                    "排到了歐!",
+                    self.clockPool[len(self.clockPool)-1]['timer'],
+                    self.clockPool[len(self.clockPool)-1]['number'],
+                    self.index,
+                    self.delete_clock_from_pool
+                )
+            )
             tmp.start()
             self.threadPool.append(tmp)
+            
+            isRepeat= False
+            for i in range(4):
+                for clock in self.clockPool:
+                    if(clock['index']==i):
+                        isRepeat=True
+                        break
+                if isRepeat==False:
+                    self.index=i
+                    break
+            self.timer=datetime.timedelta(hours=0,minutes = 0, seconds = 0)
+            self.number={"now":0,"target":0}
+            self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0)}
         print("Leaving state2")
         return
 

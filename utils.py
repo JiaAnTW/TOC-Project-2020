@@ -28,6 +28,14 @@ def active_send_text_msg(uid,msg,timer,number):
     time.sleep(timer.seconds*waitRate)
     line_bot_api.push_message(uid, TextSendMessage(text=msg))
 
+def active_send_clock_msg(uid,msg,timer,number,index,fun):
+    print("start to wait for "+str(timer))
+    waitRate=(number['target']-number['now'])-2
+    line_bot_api = LineBotApi(channel_access_token)
+    time.sleep(timer.seconds*waitRate)
+    line_bot_api.push_message(uid, TextSendMessage(text=msg))
+    fun(index)
+
 """
 def send_image_url(id, img_url):
     pass
