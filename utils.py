@@ -21,10 +21,11 @@ def send_template_message(reply_token, template):
 
     return "OK"
 
-def active_send_text_msg(uid,msg,timer):
+def active_send_text_msg(uid,msg,timer,number):
     print("start to wait for "+str(timer))
+    waitRate=(number['target']-number['now'])-2
     line_bot_api = LineBotApi(channel_access_token)
-    time.sleep(timer.seconds)
+    time.sleep(timer.seconds*waitRate)
     line_bot_api.push_message(uid, TextSendMessage(text=msg))
 
 """

@@ -38,7 +38,9 @@ class TocMachine(GraphMachine):
 
     def on_exit_setClock(self,event):
         if(event.message.text=="確定送出"):
-            tmp=threading.Thread(target =  active_send_text_msg, args = (event.source.user_id,"排到了歐!",self.timer))
+            msg="設定完成!輪到你的時候會用訊息通知你歐~現在可以再設定新的計時器"
+            active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+            tmp=threading.Thread(target =  active_send_text_msg, args = (event.source.user_id,"排到了歐!",self.timer,self.number))
             tmp.start()
             self.threadPool.append(tmp)
         print("Leaving state2")
@@ -119,7 +121,11 @@ class TocMachine(GraphMachine):
         #self.go_back()
 
     def on_exit_setTarget(self,event):
-        self.number['target']=int( event.message.text)  
+        if int( event.message.text) < self.number['now']:
+            msg="你的號碼牌不能比現在的號碼小啦~請重新輸入歐！"
+            active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+        else:
+            self.number['target']=int( event.message.text)
         print("Leaving setTarget")
     
     def is_going_to_setNow(self, event):
@@ -133,5 +139,9 @@ class TocMachine(GraphMachine):
         #self.go_back()
 
     def on_exit_setNow(self,event):
-        self.number['now']=int( event.message.text)  
+        if self.number['target']>0 and int( event.message.text) > self.number['target']:
+            msg="現在的號碼牌不能比你的號碼大啦~請重新輸入歐！"
+            active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+        else:
+            self.number['now']=int( event.message.text)  
         print("Leaving setNow")
