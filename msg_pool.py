@@ -1,4 +1,5 @@
-from linebot.models import ButtonsTemplate,PostbackTemplateAction,TemplateSendMessage
+from linebot.models import ButtonsTemplate,PostbackTemplateAction,TemplateSendMessage,CarouselTemplate,CarouselColumn
+import datetime
 
 def get_center_msg():
     stateOneTemplate=TemplateSendMessage(
@@ -14,8 +15,8 @@ def get_center_msg():
                     data='userDefine'
                 ),
                 PostbackTemplateAction(
-                    label='查詢計時',
-                    text='開啟查詢計時',
+                    label='查看目前計時器',
+                    text='查看目前計時器',
                     data='query'
                 )
             ]
@@ -128,3 +129,43 @@ def get_set_number_msg(number):
         )
     )
     return numberTemplate
+
+def get_book_msg(dataArray):
+    card=[]
+    i=1
+    for data in dataArray:
+        start=data['clock']['start']
+        period=data['clock']['time']
+        number=data['number']
+        if data['name']!=None:
+            name=data['name']
+        else:
+            name="計時器"+str(i)
+        waitRate=(number['target']-number['now'])
+        predictTime=datetime.timedelta(hours=start.hour,minutes = start.minute, seconds = start.second)+waitRate*period
+        card.append(
+            CarouselColumn(
+                title= name+", 從"+str(number['now'])+"等到"+str(number['target'])+"號",
+                text='預計於'+str(predictTime)+'輪到你',
+                actions=[
+                    PostbackTemplateAction(
+                        label='更改計時器名稱',
+                        text='更改計時器名稱',
+                        data='setName'
+                    ),
+                    PostbackTemplateAction(
+                        label='返回',
+                        text='返回',
+                        data='back'
+                    ),
+                ]
+            )
+
+        )
+        i=i+1
+
+    Carousel_template = TemplateSendMessage(
+        alt_text='Carousel template',
+        template=CarouselTemplate(columns=card)
+    )
+    return Carousel_template

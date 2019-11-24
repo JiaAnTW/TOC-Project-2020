@@ -23,14 +23,14 @@ def send_template_message(reply_token, template):
 
 def active_send_text_msg(uid,msg,timer,number):
     print("start to wait for "+str(timer))
-    waitRate=(number['target']-number['now'])-2
+    waitRate=(number['target']-number['now'])
     line_bot_api = LineBotApi(channel_access_token)
     time.sleep(timer.seconds*waitRate)
     line_bot_api.push_message(uid, TextSendMessage(text=msg))
 
 def active_send_clock_msg(uid,msg,timer,number,index,fun):
     print("start to wait for "+str(timer))
-    waitRate=(number['target']-number['now'])-2
+    waitRate=(number['target']-number['now'])
     line_bot_api = LineBotApi(channel_access_token)
     time.sleep(timer.seconds*waitRate)
     line_bot_api.push_message(uid, TextSendMessage(text=msg))

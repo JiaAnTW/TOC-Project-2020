@@ -10,7 +10,7 @@ class TocMachine(GraphMachine):
         self.machine = GraphMachine(model=self, **machine_configs)
         self.timer=datetime.timedelta(hours=0,minutes = 0, seconds = 0)
         self.number={"now":0,"target":0}
-        self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0)}
+        self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0),"start":datetime.datetime.now()}
         self.threadPool=[]
         self.clockPool=[]
         self.index=0
@@ -51,11 +51,13 @@ class TocMachine(GraphMachine):
         if(event.message.text=="確定送出"):
             msg="設定完成!輪到你的時候會用訊息通知你歐~現在可以再設定新的計時器"
             active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+            self.clock['start']=datetime.datetime.now()
             self.clockPool.append({
                 'timer':self.timer,
                 'number':self.number,
                 'clock':self.clock,
-                'index':self.index
+                'index':self.index,
+                'name': None
             })
             tmp=threading.Thread(
                 target =  active_send_clock_msg, 
@@ -185,3 +187,19 @@ class TocMachine(GraphMachine):
         else:
             self.number['now']=int( event.message.text)  
         print("Leaving setNow")
+
+    def is_going_to_book(self, event):
+        text = event.message.text
+        print("查看目前計時器\n")
+        return text.lower() == "查看目前計時器"
+
+    def on_enter_book(self, event):
+        reply_token = event.reply_token
+        if len(self.clockPool)>0:
+            send_template_message(reply_token, get_book_msg(self.clockPool))
+        else:
+            send_text_message(reply_token,"目前沒有任何計時器歐")
+            self.go_back(event)
+
+    def on_exit_book(self,event):
+        print("Leaving book")

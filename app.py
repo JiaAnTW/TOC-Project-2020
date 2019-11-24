@@ -24,11 +24,14 @@ def check_go_back(state,event):
     return False
 
 machine = TocMachine(
-    states=["init", "center", "setClock","clockCenter","setTime","setNumber","setNow","setTarget"],
+    states=["init", "center","book", "setClock","clockCenter","setTime","setNumber","setNow","setTarget"],
     transitions=[
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
         { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
         { "trigger": "go_back", "source": "setClock", "dest": "center"},
+
+        { "trigger": "advance","source": "center","dest": "book","conditions": "is_going_to_book"},
+        { "trigger": "go_back", "source": "book", "dest": "center"},
 
         { "trigger": "advance","source": "setClock","dest": "clockCenter","conditions": "is_going_to_clockCenter"},
         { "trigger": "cycle","source": "clockCenter","dest": "clockCenter","conditions": "cycle_in_clockCenter"},
@@ -138,7 +141,7 @@ def show_fsm():
 
 
 if __name__ == "__main__":
-    #port = os.environ.get("PORT", 8000)
-    port = os.environ['PORT']
-    app.run(host="0.0.0.0", port=port, debug=True, reloader=True)
+    port = os.environ.get("PORT", 8000)
+    #port = os.environ['PORT']
+    app.run(host="0.0.0.0", port=port, debug=True)
 
