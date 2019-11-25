@@ -13,7 +13,12 @@ class TocMachine(GraphMachine):
         self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0),"start":datetime.datetime.now()}
         self.threadPool=[]
         self.clockPool=[]
+        self.setNameFlag=-1
         self.index=0
+
+    def set_setName_flag(self,i):
+        self.setNameFlag=int(i)
+        print("Now fous on "+str(self.setNameFlag))
 
     def delete_clock_from_pool(self,index):
         i=0
@@ -38,7 +43,7 @@ class TocMachine(GraphMachine):
     # setClock
     def is_going_to_setClock(self, event):
         text = event.message.text
-        print("開啟自訂計時\n")
+        print("自訂計時: ")
         return text.lower() == "開啟自訂計時"
 
 
@@ -198,8 +203,23 @@ class TocMachine(GraphMachine):
         if len(self.clockPool)>0:
             send_template_message(reply_token, get_book_msg(self.clockPool))
         else:
-            send_text_message(reply_token,"目前沒有任何計時器歐")
+            msg="目前沒有任何計時器歐"
+            active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
             self.go_back(event)
 
     def on_exit_book(self,event):
         print("Leaving book")
+
+    def is_going_to_setName(self, event):
+        text = event.message.text
+        print("更改計時器名稱\n")
+        return text.lower() == "更改計時器名稱"
+
+    def on_enter_setName(self, event):
+        reply_token = event.reply_token
+        send_text_message(reply_token, "請傳給我計時器的新名稱~")
+
+    def on_exit_setName(self,event):
+        self.clockPool[self.setNameFlag]['name']=event.message.text
+        self.setNameFlag=-1
+        print("Leaving setName")

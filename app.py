@@ -13,7 +13,7 @@ from utils import send_text_message
 load_dotenv()
 
 def check_go_back(state,event):
-    goBackStates=["setClock","setTime","setNow","setTarget","clockCenter"]
+    goBackStates=["setClock","setTime","setNow","setTarget","clockCenter","setName"]
     for goBackState in goBackStates:
         if state == goBackState:
             if state== "clockCenter" and event.message.text!="結束計時":
@@ -24,14 +24,18 @@ def check_go_back(state,event):
     return False
 
 machine = TocMachine(
-    states=["init", "center","book", "setClock","clockCenter","setTime","setNumber","setNow","setTarget"],
+    states=["init", "center","book", "setClock","clockCenter","setTime","setNumber","setNow","setTarget","setName"],
     transitions=[
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
+        
         { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
         { "trigger": "go_back", "source": "setClock", "dest": "center"},
 
         { "trigger": "advance","source": "center","dest": "book","conditions": "is_going_to_book"},
         { "trigger": "go_back", "source": "book", "dest": "center"},
+
+        { "trigger": "advance","source": "book","dest": "setName","conditions": "is_going_to_setName"},
+        { "trigger": "go_back", "source": "setName", "dest": "book"},
 
         { "trigger": "advance","source": "setClock","dest": "clockCenter","conditions": "is_going_to_clockCenter"},
         { "trigger": "cycle","source": "clockCenter","dest": "clockCenter","conditions": "cycle_in_clockCenter"},
@@ -115,6 +119,10 @@ def webhook_handler():
     for event in events:
         if not isinstance(event, MessageEvent):
             continue
+        
+        if(event.message.type=="postback" and machine.state=="book"):
+            machine.set_setName_flag(event.postback.data)
+
         if not isinstance(event.message, TextMessage):
             continue
         if not isinstance(event.message.text, str):

@@ -1,4 +1,4 @@
-from linebot.models import ButtonsTemplate,PostbackTemplateAction,TemplateSendMessage,CarouselTemplate,CarouselColumn
+from linebot.models import MessageTemplateAction,ButtonsTemplate,PostbackTemplateAction,TemplateSendMessage,CarouselTemplate,CarouselColumn
 import datetime
 
 def get_center_msg():
@@ -9,15 +9,13 @@ def get_center_msg():
             text='根據您的需求點選點選下方功能',
             thumbnail_image_url='https://swordshield.portal-pokemon.com/tc/pokemon/img/pokemon-image_v10_1-1.png',
             actions=[
-                PostbackTemplateAction(
+                MessageTemplateAction(
                     label='自訂計時',
-                    text='開啟自訂計時',
-                    data='userDefine'
+                    text='開啟自訂計時'
                 ),
-                PostbackTemplateAction(
+                MessageTemplateAction(
                     label='查看目前計時器',
-                    text='查看目前計時器',
-                    data='query'
+                    text='查看目前計時器'
                 )
             ]
         )
@@ -151,7 +149,7 @@ def get_book_msg(dataArray):
                     PostbackTemplateAction(
                         label='更改計時器名稱',
                         text='更改計時器名稱',
-                        data='setName'
+                        data=i-1
                     ),
                     PostbackTemplateAction(
                         label='返回',
