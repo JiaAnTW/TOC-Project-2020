@@ -62,14 +62,14 @@ app = Flask(__name__, static_url_path="")
 
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
-channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
-if channel_secret is None:
-    print("Specify LINE_CHANNEL_SECRET as environment variable.")
-    sys.exit(1)
-if channel_access_token is None:
-    print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
-    sys.exit(1)
+#channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
+#channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
+#if channel_secret is None:
+    #print("Specify LINE_CHANNEL_SECRET as environment variable.")
+    #sys.exit(1)
+#if channel_access_token is None:
+    #print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
+    #sys.exit(1)
 
 line_bot_api = LineBotApi("0SLteZR2B5lHmN8jtZrYRLz5kIS9e7YxbG5iJFOsOWTEamfytuROe0T1X5NsjBIf6qjQFVnY4qQjDeKn7ibOSE/U72DQaMyaXE+6FTWGvySNI9JEsJqK3S/xWBi9b46WS7qEIplNTX1SMENaYAT0EgdB04t89/1O/w1cDnyilFU=")
 parser = WebhookParser("34bd103fc030554fd8abb36dac789e33")
@@ -150,6 +150,6 @@ def show_fsm():
 
 if __name__ == "__main__":
     #port = os.environ.get("PORT", 8000)
-    #port = os.environ['PORT']
-    app.run(debug=True)
+    port = os.environ['PORT']
+    app.run(host="0.0.0.0", port=port, debug=True, reloader=True)
 
