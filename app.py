@@ -62,8 +62,8 @@ app = Flask(__name__, static_url_path="")
 
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = "34bd103fc030554fd8abb36dac789e33"
-channel_access_token = "0SLteZR2B5lHmN8jtZrYRLz5kIS9e7YxbG5iJFOsOWTEamfytuROe0T1X5NsjBIf6qjQFVnY4qQjDeKn7ibOSE/U72DQaMyaXE+6FTWGvySNI9JEsJqK3S/xWBi9b46WS7qEIplNTX1SMENaYAT0EgdB04t89/1O/w1cDnyilFU="
+channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
+channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 if channel_secret is None:
     print("Specify LINE_CHANNEL_SECRET as environment variable.")
     sys.exit(1)
