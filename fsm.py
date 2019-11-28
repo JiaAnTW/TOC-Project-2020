@@ -15,10 +15,17 @@ class TocMachine(GraphMachine):
         self.clockPool=[]
         self.setNameFlag=-1
         self.index=0
+        self.beforeState="none"
 
     def set_setName_flag(self,i):
         self.setNameFlag=int(i)
         print("Now fous on "+str(self.setNameFlag))
+    
+    def get_name_by_index(self,index):
+        for clockInfo in self.clockPool:
+            if clockInfo['index']==index:
+                return clockInfo['name']
+        return None
 
     def delete_clock_from_pool(self,index):
         i=0
@@ -38,21 +45,31 @@ class TocMachine(GraphMachine):
         send_template_message(reply_token, get_center_msg())
 
     def on_exit_center(self,event):
+        self.set_setName_flag(-1)
         print("Leaving state1")
+
+    def is_back_to_center(self, event):
+        return self.setNameFlag==-1
 
     # setClock
     def is_going_to_setClock(self, event):
         text = event.message.text
-        print("自訂計時: ")
-        return text.lower() == "開啟自訂計時"
-
+        print(event.message.text)
+        return (text.lower() == "開啟自訂計時"or text.lower() == "修改號碼牌內容")
 
     def on_enter_setClock(self, event):
+        print("setNameFlag is "+str(self.setNameFlag))
         reply_token = event.reply_token
+        if(self.setNameFlag!=-1):
+            self.timer=self.clockPool[self.setNameFlag]['timer']
+            self.number=self.clockPool[self.setNameFlag]['number']
+            self.clock=self.clockPool[self.setNameFlag]['clock']
+            self.index=self.clockPool[self.setNameFlag]['index']
         send_template_message(reply_token, get_set_clock_msg(self.timer,self.number))
         #self.go_back()
 
     def on_exit_setClock(self,event):
+        print("setNameFlag is "+str(self.setNameFlag))
         if(event.message.text=="確定送出"):
             msg="設定完成!輪到你的時候會用訊息通知你歐~現在可以再設定新的計時器"
             active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
@@ -68,11 +85,12 @@ class TocMachine(GraphMachine):
                 target =  active_send_clock_msg, 
                 args = (
                     event.source.user_id,
-                    "排到了歐!",
+                    " 快要排到了歐!",
                     self.clockPool[len(self.clockPool)-1]['timer'],
                     self.clockPool[len(self.clockPool)-1]['number'],
                     self.index,
-                    self.delete_clock_from_pool
+                    self.delete_clock_from_pool,
+                    self.get_name_by_index
                 )
             )
             tmp.start()
@@ -92,7 +110,7 @@ class TocMachine(GraphMachine):
             self.clock={"set":False, "time":datetime.timedelta(minutes = 0, seconds = 0)}
         print("Leaving state2")
         return
-
+    
     # setTime
     def is_going_to_setTime(self, event):
         text = event.message.text
@@ -200,6 +218,7 @@ class TocMachine(GraphMachine):
 
     def on_enter_book(self, event):
         reply_token = event.reply_token
+        self.setNameFlag=-1
         if len(self.clockPool)>0:
             send_template_message(reply_token, get_book_msg(self.clockPool))
         else:
@@ -209,6 +228,13 @@ class TocMachine(GraphMachine):
 
     def on_exit_book(self,event):
         print("Leaving book")
+    
+    def is_back_to_book(self, event):
+        ans= False
+        print("setNameFlag is "+str(self.setNameFlag))
+        if self.setNameFlag != -1:
+            ans = True
+        return ans
 
     def is_going_to_setName(self, event):
         text = event.message.text

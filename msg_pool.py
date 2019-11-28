@@ -131,6 +131,25 @@ def get_set_number_msg(number):
 def get_book_msg(dataArray):
     card=[]
     i=1
+    card.append(
+                CarouselColumn(
+                title= "往左滑動即可察看目前的號碼牌",
+                text='.',
+                actions=[
+                    MessageTemplateAction(
+                        label='返回',
+                        text='返回'
+                    ),MessageTemplateAction(
+                        label='返回',
+                        text='返回'
+                    ),MessageTemplateAction(
+                        label='返回',
+                        text='返回'
+                    )
+                ]
+            )
+
+        )
     for data in dataArray:
         start=data['clock']['start']
         period=data['clock']['time']
@@ -149,6 +168,11 @@ def get_book_msg(dataArray):
                     PostbackTemplateAction(
                         label='更改計時器名稱',
                         text='更改計時器名稱',
+                        data=i-1
+                    ),
+                    PostbackTemplateAction(
+                        label='修改號碼牌內容',
+                        text='修改號碼牌內容',
                         data=i-1
                     ),
                     PostbackTemplateAction(

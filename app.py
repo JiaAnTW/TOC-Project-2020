@@ -29,17 +29,20 @@ machine = TocMachine(
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
         
         { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
-        { "trigger": "go_back", "source": "setClock", "dest": "center"},
+        { "trigger": "go_back", "source": "setClock", "dest": "center","conditions": "is_back_to_center"},
+        { "trigger": "go_back", "source": "setClock", "dest": "book","conditions": "is_back_to_book"},
 
         { "trigger": "advance","source": "center","dest": "book","conditions": "is_going_to_book"},
         { "trigger": "go_back", "source": "book", "dest": "center"},
 
         { "trigger": "advance","source": "book","dest": "setName","conditions": "is_going_to_setName"},
+        { "trigger": "advance","source": "book","dest": "setClock","conditions": "is_going_to_setClock"},
         { "trigger": "go_back", "source": "setName", "dest": "book"},
 
         { "trigger": "advance","source": "setClock","dest": "clockCenter","conditions": "is_going_to_clockCenter"},
         { "trigger": "cycle","source": "clockCenter","dest": "clockCenter","conditions": "cycle_in_clockCenter"},
         { "trigger": "go_back", "source": "clockCenter", "dest": "setClock"},
+
 
         { "trigger": "advance","source": "clockCenter","dest": "setTime","conditions": "is_going_to_setTime"},
         { "trigger": "go_back", "source": "clockCenter", "dest": "setClock"},
@@ -102,43 +105,58 @@ def callback():
     return "OK"
 
 
+
 @app.route("/webhook", methods=["POST"])
 def webhook_handler():
     signature = request.headers["X-Line-Signature"]
     # get request body as text
+    
     body = request.get_data(as_text=True)
     app.logger.info(f"Request body: {body}")
-
+    
     # parse webhook body
     try:
         events = parser.parse(body, signature)
     except InvalidSignatureError:
         abort(400)
 
+    beforeEvent=None
     # if event is MessageEvent and message is TextMessage, then echo text
+    i=0
     for event in events:
+
+        
+        if(event.type=="postback" and machine.beforeState=="book"):
+            machine.set_setName_flag(event.postback.data)
+            #response = machine.advance(beforeEvent)
+            beforeEvent= None
+            continue
         if not isinstance(event, MessageEvent):
             continue
-        
-        if(event.message.type=="postback" and machine.state=="book"):
-            machine.set_setName_flag(event.postback.data)
-
         if not isinstance(event.message, TextMessage):
             continue
         if not isinstance(event.message.text, str):
             continue
         print(f"\nFSM STATE: {machine.state}")
         print(f"REQUEST BODY: \n{body}")
-
+        print(f"Before state is {machine.beforeState}")
         if (event.message.type=="text" and event.message.text=="返回")or check_go_back(machine.state, event):
             response = machine.go_back(event)
+        elif machine.state=="book" and (event.message.text=="更改計時器名稱" or event.message.text=="修改號碼牌內容"):
+            #if events[i-1].type=="postback":
+                #machine.set_setName_flag(events[i-1].postback.data)
+            #else:
+                #machine.set_setName_flag(events[i+1].postback.data)
+            response = machine.advance(event)
+
         elif machine.state=="clockCenter" and (event.message.text=="開始計時"):
             response = machine.cycle(event)
         else:
             response = machine.advance(event)
         if response == False:
             send_text_message(event.reply_token, "Not Entering any State")
-
+        machine.beforeState=machine.state
+        i=i+1
     return "OK"
 
 
