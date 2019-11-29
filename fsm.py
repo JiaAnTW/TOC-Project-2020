@@ -1,6 +1,7 @@
 from transitions.extensions import GraphMachine
 import datetime
 import threading
+from database.controller import Controller as DB
 from utils import *
 from msg_pool import *
 
@@ -16,6 +17,7 @@ class TocMachine(GraphMachine):
         self.setNameFlag=-1
         self.index=0
         self.beforeState="none"
+        self.DB=DB()
 
     def set_setName_flag(self,i):
         self.setNameFlag=int(i)
@@ -264,6 +266,10 @@ class TocMachine(GraphMachine):
         #self.go_back()
 
     def on_exit_locationCenter(self,event):
+        if(event.message.text.lower()=='返回'):
+            output=self.clockPool[self.setNameFlag]['locationInfo']
+            output['spotName']=self.clockPool[self.setNameFlag]['spotName']
+            self.DB.save_location_info(output)
         print("Leaving locationCenter")
     
     def is_going_to_setSpotName(self, event):
