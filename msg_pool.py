@@ -176,9 +176,9 @@ def get_book_msg(dataArray):
                         data=i-1
                     ),
                     PostbackTemplateAction(
-                        label='返回',
-                        text='返回',
-                        data='back'
+                        label='輸入位置資訊',
+                        text='輸入位置資訊',
+                        data=i-1
                     ),
                 ]
             )
@@ -191,3 +191,36 @@ def get_book_msg(dataArray):
         template=CarouselTemplate(columns=card)
     )
     return Carousel_template
+
+def get_locationCenter_msg(spotName,locationInfo):
+    if spotName!=None:
+        name=spotName
+    else:
+        name="尚未設定"
+    if locationInfo!=None:
+        info=locationInfo['address']+" (經度"+str(locationInfo['latitude'])+", 緯度"+str(locationInfo['longitude'])+")"
+    else:
+        info="尚未設定"
+
+    timeTemplate=TemplateSendMessage(
+        alt_text=' 設定地點',
+        template=ButtonsTemplate(
+            title= "地點： "+name,
+            text="地理資訊: "+str(info),
+            actions=[
+                MessageTemplateAction(
+                    label='輸入地點名稱',
+                    text='輸入地點名稱'
+                ),
+                MessageTemplateAction(
+                    label='回傳地理資訊',
+                    text='回傳地理資訊'
+                ),
+                MessageTemplateAction(
+                    label='返回',
+                    text='返回'
+                )
+            ]
+        )
+    )
+    return timeTemplate

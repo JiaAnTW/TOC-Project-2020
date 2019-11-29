@@ -79,7 +79,9 @@ class TocMachine(GraphMachine):
                 'number':self.number,
                 'clock':self.clock,
                 'index':self.index,
-                'name': None
+                'name': None,
+                'spotName':None,
+                'locationInfo':None
             })
             tmp=threading.Thread(
                 target =  active_send_clock_msg, 
@@ -249,3 +251,47 @@ class TocMachine(GraphMachine):
         self.clockPool[self.setNameFlag]['name']=event.message.text
         self.setNameFlag=-1
         print("Leaving setName")
+
+    def is_going_to_locationCenter(self, event):
+        text = event.message.text
+        print("enter cycle\n")
+        return text.lower() == "輸入位置資訊"
+
+    def on_enter_locationCenter(self, event):
+        reply_token = event.reply_token
+        index=self.setNameFlag
+        send_template_message(reply_token, get_locationCenter_msg(self.clockPool[index]['spotName'],self.clockPool[index]['locationInfo']))
+        #self.go_back()
+
+    def on_exit_locationCenter(self,event):
+        print("Leaving locationCenter")
+    
+    def is_going_to_setSpotName(self, event):
+        text = event.message.text
+        print("輸入地點名稱\n")
+        return text.lower() == "輸入地點名稱"
+
+    def on_enter_setSpotName(self, event):
+        reply_token = event.reply_token
+        send_text_message(reply_token, "請輸入該地點的名稱~")
+
+    def on_exit_setSpotName(self,event):
+        self.clockPool[self.setNameFlag]['spotName']=event.message.text
+        print("Leaving 輸入地點名稱")
+
+    def is_going_to_setLocationInfo(self, event):
+        text = event.message.text
+        print("回傳地理資訊\n")
+        return text.lower() == "回傳地理資訊"
+
+    def on_enter_setLocationInfo(self, event):
+        reply_token = event.reply_token
+        send_text_message(reply_token, "回傳該地點的地理資訊~")
+
+    def on_exit_setLocationInfo(self,event):
+        self.clockPool[self.setNameFlag]['locationInfo']={
+            'address': event.message.address,
+            'latitude':event.message.latitude,
+            'longitude':event.message.longitude
+        }
+        print("Leaving 輸入地理資訊")

@@ -13,7 +13,7 @@ from utils import send_text_message
 load_dotenv()
 
 def check_go_back(state,event):
-    goBackStates=["setClock","setTime","setNow","setTarget","clockCenter","setName"]
+    goBackStates=["setClock","setTime","setNow","setTarget","clockCenter","setName","setSpotName","setLocationInfo"]
     for goBackState in goBackStates:
         if state == goBackState:
             if state== "clockCenter" and event.message.text!="結束計時":
@@ -24,7 +24,7 @@ def check_go_back(state,event):
     return False
 
 machine = TocMachine(
-    states=["init", "center","book", "setClock","clockCenter","setTime","setNumber","setNow","setTarget","setName"],
+    states=["init", "center","book", "setClock","clockCenter","setTime","setNumber","setNow","setTarget","setName","locationCenter","setSpotName","setLocationInfo"],
     transitions=[
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
         
@@ -38,6 +38,13 @@ machine = TocMachine(
         { "trigger": "advance","source": "book","dest": "setName","conditions": "is_going_to_setName"},
         { "trigger": "advance","source": "book","dest": "setClock","conditions": "is_going_to_setClock"},
         { "trigger": "go_back", "source": "setName", "dest": "book"},
+        { "trigger": "advance","source": "book","dest": "locationCenter","conditions": "is_going_to_locationCenter"},
+        { "trigger": "go_back", "source": "locationCenter", "dest": "book"},
+
+        { "trigger": "advance","source": "locationCenter","dest": "setSpotName","conditions": "is_going_to_setSpotName"},
+        { "trigger": "go_back", "source": "setSpotName", "dest": "locationCenter"},
+        { "trigger": "advance","source": "locationCenter","dest": "setLocationInfo","conditions": "is_going_to_setLocationInfo"},
+        { "trigger": "go_back", "source": "setLocationInfo", "dest": "locationCenter"},
 
         { "trigger": "advance","source": "setClock","dest": "clockCenter","conditions": "is_going_to_clockCenter"},
         { "trigger": "cycle","source": "clockCenter","dest": "clockCenter","conditions": "cycle_in_clockCenter"},
@@ -46,6 +53,7 @@ machine = TocMachine(
 
         { "trigger": "advance","source": "clockCenter","dest": "setTime","conditions": "is_going_to_setTime"},
         { "trigger": "go_back", "source": "clockCenter", "dest": "setClock"},
+        { "trigger": "go_back", "source": "setTime", "dest": "clockCenter"},
 
         { "trigger": "advance","source": "setClock","dest": "setNumber","conditions": "is_going_to_setNumber"},
         { "trigger": "go_back", "source": "setNumber", "dest": "setClock"},
@@ -124,8 +132,6 @@ def webhook_handler():
     # if event is MessageEvent and message is TextMessage, then echo text
     i=0
     for event in events:
-
-        
         if(event.type=="postback" and machine.beforeState=="book"):
             machine.set_setName_flag(event.postback.data)
             #response = machine.advance(beforeEvent)
@@ -133,7 +139,8 @@ def webhook_handler():
             continue
         if not isinstance(event, MessageEvent):
             continue
-        if not isinstance(event.message, TextMessage):
+        if event.message.type=="location":
+            response = machine.go_back(event)
             continue
         if not isinstance(event.message.text, str):
             continue
