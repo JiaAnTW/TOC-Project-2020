@@ -269,7 +269,7 @@ class TocMachine(GraphMachine):
         if(event.message.text.lower()=='返回'):
             output=self.clockPool[self.setNameFlag]['locationInfo']
             output['spotName']=self.clockPool[self.setNameFlag]['spotName']
-            self.DB.save_location_info(output)
+            self.DB.save_location_info(output,self.clockPool[self.setNameFlag]['timer'])
         print("Leaving locationCenter")
     
     def is_going_to_setSpotName(self, event):
