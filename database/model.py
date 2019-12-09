@@ -5,7 +5,7 @@ import datetime
 class Model():
     def __init__(self):
         try:
-            self.db = pymysql.connect("localhost",os.environ['USER'],os.environ['DATABASE_PASSWORD'],os.environ['DATABASE'] )
+            self.db = pymysql.connect(os.environ['DB_IP'],os.environ['USER'],os.environ['DATABASE_PASSWORD'],os.environ['DATABASE'] )
             print("database connection success")
         except Exception as e:
             print("database connection fail")
