@@ -7,8 +7,9 @@ class Model():
         try:
             self.db = pymysql.connect("localhost",os.environ['USER'],os.environ['DATABASE_PASSWORD'],os.environ['DATABASE'] )
             print("database connection success")
-        except:
+        except Exception as e:
             print("database connection fail")
+            print(e)
             exit(1)
 
     def index(self):
