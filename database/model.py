@@ -27,7 +27,7 @@ class Model():
             print("Error when query [index]")
 
     
-    def create(self,newSpot,timer):
+    def create(self,newSpot):
         try:
             cursor = self.db.cursor()
         except:
@@ -43,12 +43,8 @@ class Model():
             print("Error when query [create_location]")
             print(e)
         try:
-            query = "SELECT id FROM pin WHERE name='%s'"% (newSpot['spotName'])
-            cursor.execute(query)
-            data = cursor.fetchone()
-            print("data is "+str(data))
-            self.create_table(data[0],timer)
-            self.db.commit()
+            return self.read_id("name",newSpot['spotName'])
+            
         except Exception as e:
             print("Error when query [send_create_table]")
             print(e)
@@ -66,26 +62,50 @@ class Model():
             query = "SELECT * FROM pin WHERE %s = '%s'"%(data_type,target)
             cursor.execute(query)
             data = cursor.fetchone()
+            self.db.commit()
             if data!=None:
                 print ("data is "+str(data))
             return data
-        except:
-            print("Error when query [index]")
+            
+        except Exception as e:
+            print("Error when query [read]")
+            print(e)
 
-
-    def update(self,newSpot):
+    def read_id(self,typ,value):
         try:
             cursor = self.db.cursor()
         except:
             self._reconnect()
             cursor = self.db.cursor()
-        #try:    
-        query = "UPDATE pin SET name='%s', address='%s'\
-                ,latitude=%f, longitude=%f "% \
-                (newSpot['spotName'], newSpot['address'], newSpot['latitude'], newSpot['longitude'])
-        #except:
-        #print("Error when query [update_location]")
-        cursor.execute(query)
+        try:
+            query = "SELECT id FROM pin WHERE "+str(typ)+"='%s'"% (value)
+            cursor.execute(query)
+            data = cursor.fetchone()
+            print("data is "+str(data))
+            self.db.commit()
+            return data[0]
+            
+        except Exception as e:
+            print("Error when query [send_create_table]")
+            print(e)
+        return
+
+
+    def update(self,id,newSpot):
+        try:
+            cursor = self.db.cursor()
+        except:
+            self._reconnect()
+            cursor = self.db.cursor()
+        try:    
+            query = "UPDATE pin SET name='%s', address='%s'\
+                ,latitude=%f, longitude=%f WHERE id=%d"% \
+                (newSpot['spotName'], newSpot['address'], newSpot['latitude'], newSpot['longitude'],id)
+            cursor.execute(query)
+            self.db.commit()
+        except:
+            print("Error when query [update_location]")
+        
 
     def create_table(self,id,time):
         try:
@@ -111,6 +131,41 @@ class Model():
             self.db.commit()
         except Exception as e:
             print("Error when query [create_table]")
+            print(e)
+
+    def read_table(self,id):
+        try:
+            cursor = self.db.cursor()
+        except:
+            self._reconnect()
+            cursor = self.db.cursor()
+            
+        try:
+            query = "SELECT * FROM spot_"+str(id)
+            cursor.execute(query)
+            data = cursor.fetchone()
+            self.db.commit()
+            return data
+            
+        except Exception as e:
+            print("Error when query [read]")
+            print(e)
+
+    def create_spot_info(self,id,timer):
+        try:
+            cursor = self.db.cursor()
+        except:
+            self._reconnect()
+            cursor = self.db.cursor()
+        try:
+            now=datetime.datetime.now() 
+            localtime = now.strftime("%Y-%m-%d-%a %H:%M:%S")    
+            query = "INSERT INTO spot_"+str(id)+" (time,period) VALUES('%s', '%s')"% \
+            (localtime,timer)
+            cursor.execute(query)
+            self.db.commit()
+        except Exception as e:
+            print("Error when query [create_spot_info]")
             print(e)
 
 
