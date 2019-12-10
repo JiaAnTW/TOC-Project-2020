@@ -10,13 +10,22 @@ def get_center_msg():
             thumbnail_image_url='https://swordshield.portal-pokemon.com/tc/pokemon/img/pokemon-image_v10_1-1.png',
             actions=[
                 MessageTemplateAction(
-                    label='自訂計時',
+                    label='新增計時',
                     text='開啟自訂計時'
+                ),
+                MessageTemplateAction(
+                    label='以地點新增計時',
+                    text='以地點新增計時'
                 ),
                 MessageTemplateAction(
                     label='查看目前計時器',
                     text='查看目前計時器'
+                ),
+                MessageTemplateAction(
+                    label='不要偷看啦',
+                    text='還是要偷看'
                 )
+                
             ]
         )
     )

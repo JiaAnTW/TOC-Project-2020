@@ -124,5 +124,6 @@ class Controller():
                 return True
             return False
         except Exception as e:
+            return False
             print(e)
 

@@ -17,6 +17,7 @@ class TocMachine(GraphMachine):
         self.setNameFlag=-1
         self.index=0
         self.beforeState="none"
+        self.isFromCenter=0
         self.DB=DB()
 
     def set_setName_flag(self,i):
@@ -51,7 +52,10 @@ class TocMachine(GraphMachine):
         print("Leaving state1")
 
     def is_back_to_center(self, event):
-        return self.setNameFlag==-1
+        if self.isFromCenter==1 or self.setNameFlag==-1:
+            self.isFromCenter=0
+            return True
+        return self.setNameFlag==-1 
 
     # setClock
     def is_going_to_setClock(self, event):
@@ -258,25 +262,38 @@ class TocMachine(GraphMachine):
 
     def is_going_to_locationCenter(self, event):
         text = event.message.text
-        print("enter cycle\n")
-        return text.lower() == "輸入位置資訊"
+        if(text.lower()== "以地點新增計時"):
+            self.isFromCenter=1
+        elif text.lower() == "輸入位置資訊":
+            self.isFromCenter=0
+        return text.lower() == "輸入位置資訊" or text.lower()== "以地點新增計時"
 
     def on_enter_locationCenter(self, event):
+        if self.isFromCenter==2:
+            self.isFromCenter=0
+            self.skip(event)
         reply_token = event.reply_token
         index=self.setNameFlag
-        send_template_message(reply_token, get_locationCenter_msg(self.clockPool[index]['spotName'],self.clockPool[index]['locationInfo']))
+        if(index>=0):
+            send_template_message(reply_token, get_locationCenter_msg(self.clockPool[index]['spotName'],self.clockPool[index]['locationInfo']))
+        else:
+             send_template_message(reply_token, get_locationCenter_msg("請輸入地點名稱或地點資訊",None))
         #self.go_back()
 
     def on_exit_locationCenter(self,event):
-        if(event.message.text.lower()=='返回'):
-            output=self.clockPool[self.setNameFlag]['locationInfo']
-            output['spotName']=self.clockPool[self.setNameFlag]['spotName']
-            saver=threading.Thread(
-                target =  self.DB.save_location_info,
-                args= (output,self.clockPool[self.setNameFlag]['timer'])         
-            )
-            saver.start()    
+        try:
+            if(self.isFromCenter == 0):
+                if(event.message.text.lower()=='返回'):
+                    output=self.clockPool[self.setNameFlag]['locationInfo']
+                    output['spotName']=self.clockPool[self.setNameFlag]['spotName']
+                    saver=threading.Thread(
+                        target =  self.DB.save_location_info,
+                        args= (output,self.clockPool[self.setNameFlag]['timer'])         
+                    )
+                    saver.start()    
             #self.DB.save_location_info(output,self.clockPool[self.setNameFlag]['timer'])
+        except Exception as e:
+            print(e)
         print("Leaving locationCenter")
     
     def is_going_to_setSpotName(self, event):
@@ -286,7 +303,7 @@ class TocMachine(GraphMachine):
             return text.lower() == "輸入地點名稱"
         except Exception as e:
             print(e)
-            self.error()  
+               
 
     def on_enter_setSpotName(self, event):
         try:
@@ -294,15 +311,30 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "請輸入該地點的名稱~")
         except Exception as e:
             print(e)
-            self.error()        
+                     
 
     def on_exit_setSpotName(self,event):
         try:
-            self.clockPool[self.setNameFlag]['spotName']=event.message.text
+            if self.isFromCenter==1:
+                data=self.DB.read_location_type("name",event.message.text)
+                if data== None:
+                    msg="不存在此地點歐"
+                    active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+                else:
+                    hour=int(int(data[5])/3600)
+                    mini=int((data[5]-int(int(data[5])/3600))/60)
+                    sec=int(int(data[5])%60)
+                    clock=datetime.timedelta(hours=hour,minutes=mini,seconds=sec)
+                    self.timer=clock
+                    self.clock["time"]=clock
+                    self.isFromCenter=2
+                    self.name=event.message.text
+            else:
+                self.clockPool[self.setNameFlag]['spotName']=event.message.text
             print("Leaving 輸入地點名稱")
         except Exception as e:
             print(e)
-            self.error()
+             
 
     def is_going_to_setLocationInfo(self, event):
         try:
@@ -311,7 +343,7 @@ class TocMachine(GraphMachine):
             return text.lower() == "回傳地理資訊"
         except Exception as e:
             print(e)
-            self.error()
+             
 
     def on_enter_setLocationInfo(self, event):
         try:
@@ -319,16 +351,44 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "回傳該地點的地理資訊~")
         except Exception as e:
             print(e)
-            self.error()
+             
 
     def on_exit_setLocationInfo(self,event):
         try:
-            self.clockPool[self.setNameFlag]['locationInfo']={
-                'address': event.message.address,
-                'latitude':event.message.latitude,
-                'longitude':event.message.longitude
-            }
+            if self.isFromCenter==1:
+                data=self.DB.read_location_type("latitude",event.message.latitude)
+                if data== None:
+                    msg="不存在此地點歐"
+                    active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),self.number)
+                else:
+                    if data[4]==event.message.longitude:
+                        hour=int(int(data[5])/3600)
+                        mini=int((data[5]-int(int(data[5])/3600))/60)
+                        sec=int(int(data[5])%60)
+                        clock=datetime.timedelta(hours=hour,minutes=mini,seconds=sec)
+                        self.timer=clock
+                        self.clock["time"]=clock
+                        self.isFromCenter=2
+                        self.name=data[1]
+                    else:
+                        for check in data:
+                            if(check[4]==event.message.longitude):
+                                hour=int(int(check[5])/3600)
+                                mini=int((check[5]-int(int(data[5])/3600))/60)
+                                sec=int(int(check[5])%60)
+                                clock=datetime.timedelta(hours=hour,minutes=mini,seconds=sec)
+                                self.timer=clock
+                                self.clock["time"]=clock
+                                self.isFromCenter=2
+                                self.name=data[1]
+
+            else:
+                self.clockPool[self.setNameFlag]['locationInfo']={
+                    'address': event.message.address,
+                    'latitude':event.message.latitude,
+                    'longitude':event.message.longitude
+                }
             print("Leaving 輸入地理資訊")
         except Exception as e:
             print(e)
-            self.error()
+             

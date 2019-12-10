@@ -60,7 +60,10 @@ class Model():
             cursor = self.db.cursor()
             
         try:
-            query = "SELECT * FROM pin WHERE %s = '%s'"%(data_type,target)
+            if(data_type=="latitude" or data_type=="longitude"):
+                query = "SELECT * FROM pin WHERE %s = '%f'"%(data_type,target)
+            else:
+                query = "SELECT * FROM pin WHERE %s = '%s'"%(data_type,target)
             cursor.execute(query)
             data = cursor.fetchone()
             self.db.commit()

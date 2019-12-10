@@ -45,16 +45,22 @@ states = ["init", "center","book", "setClock","clockCenter","setTime","setNumber
 transitions=[
         { "trigger": "advance","source": "init","dest": "center","conditions": "is_going_to_center"},
         { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
+        { "trigger": "advance","source": "center","dest": "setClock","conditions": "is_going_to_setClock"},
+        { "trigger": "advance","source": "center","dest": "locationCenter","conditions": "is_going_to_locationCenter"},
+        
         { "trigger": "go_back", "source": "setClock", "dest": "center","conditions": "is_back_to_center"},
         { "trigger": "go_back", "source": "setClock", "dest": "book","conditions": "is_back_to_book"},
         { "trigger": "advance","source": "center","dest": "book","conditions": "is_going_to_book"},
         { "trigger": "go_back", "source": "book", "dest": "center"},
         { "trigger": "advance","source": "book","dest": "setName","conditions": "is_going_to_setName"},
         { "trigger": "advance","source": "book","dest": "setClock","conditions": "is_going_to_setClock"},
-        { "trigger": "go_back", "source": "setName", "dest": "book"},
+        { "trigger": "go_back", "source": "setName", "dest": "book","conditions": "is_back_to_book"},
         { "trigger": "advance","source": "book","dest": "locationCenter","conditions": "is_going_to_locationCenter"},
-        { "trigger": "go_back", "source": "locationCenter", "dest": "book"},
+        { "trigger": "go_back", "source": "locationCenter", "dest": "book","conditions": "is_back_to_book"},
         { "trigger": "advance","source": "locationCenter","dest": "setSpotName","conditions": "is_going_to_setSpotName"},
+        { "trigger": "skip","source": "locationCenter","dest": "setClock"},
+        { "trigger": "go_back","source": "locationCenter","dest": "center","conditions": "is_back_to_center"},
+
         { "trigger": "go_back", "source": "setSpotName", "dest": "locationCenter"},
         { "trigger": "advance","source": "locationCenter","dest": "setLocationInfo","conditions": "is_going_to_setLocationInfo"},
         { "trigger": "go_back", "source": "setLocationInfo", "dest": "locationCenter"},
@@ -70,7 +76,6 @@ transitions=[
         { "trigger": "go_back", "source": "setNow", "dest": "setNumber"},
         { "trigger": "advance","source": "setNumber","dest": "setTarget","conditions": "is_going_to_setTarget"},
         { "trigger": "go_back", "source": "setTarget", "dest": "setNumber"},
-        { "trigger": "error", "source": states, "dest": "init"},
     ]
 machine = TocMachine(
     states=states,
@@ -143,7 +148,6 @@ def callback():
 def webhook_handler():
     signature = request.headers["X-Line-Signature"]
     # get request body as text
-    
     body = request.get_data(as_text=True)
     app.logger.info(f"Request body: {body}")
     
@@ -157,40 +161,48 @@ def webhook_handler():
     # if event is MessageEvent and message is TextMessage, then echo text
     i=0
     for event in events:
+        print("test")
         index=check_user_exsist(event.source.user_id)
         update_time(index)
-        if(event.type=="postback" and userOnline[index]["state"].beforeState=="book"):
-            userOnline[index]["state"].set_setName_flag(event.postback.data)
-            #response = machine.advance(beforeEvent)
-            beforeEvent= None
-            continue
-        if not isinstance(event, MessageEvent):
-            continue
-        if event.message.type=="location":
-            response = userOnline[index]["state"].go_back(event)
-            continue
-        if not isinstance(event.message.text, str):
-            continue
-        print(f"\nFSM STATE: {userOnline[index]['state'].state}")
-        print(f"REQUEST BODY: \n{body}")
-        print(f"Before state is {userOnline[index]['state'].beforeState}")
-        if (event.message.type=="text" and event.message.text=="返回")or check_go_back(userOnline[index]["state"].state, event):
-            response = userOnline[index]["state"].go_back(event)
-        elif userOnline[index]["state"].state=="book" and (event.message.text=="更改計時器名稱" or event.message.text=="修改號碼牌內容"):
-            #if events[i-1].type=="postback":
-                #machine.set_setName_flag(events[i-1].postback.data)
-            #else:
-                #machine.set_setName_flag(events[i+1].postback.data)
-            response = userOnline[index]["state"].advance(event)
+        try:
+            if(event.type=="postback" and userOnline[index]["state"].beforeState=="book"):
+                userOnline[index]["state"].set_setName_flag(event.postback.data)
+                #response = machine.advance(beforeEvent)
+                beforeEvent= None
+                continue
+            if not isinstance(event, MessageEvent):
+                continue
+            if event.message.type=="location":
+                response = userOnline[index]["state"].go_back(event)
+                continue
+            if not isinstance(event.message.text, str):
+                continue
+            print(f"\nFSM STATE: {userOnline[index]['state'].state}")
+            print(f"REQUEST BODY: \n{body}")
+            print(f"Before state is {userOnline[index]['state'].beforeState}")
+            if (event.message.type=="text" and event.message.text=="返回")or check_go_back(userOnline[index]["state"].state, event):
+                response = userOnline[index]["state"].go_back(event)
+            elif userOnline[index]["state"].state=="book" and (event.message.text=="更改計時器名稱" or event.message.text=="修改號碼牌內容"):
+                #if events[i-1].type=="postback":
+                    #machine.set_setName_flag(events[i-1].postback.data)
+                #else:
+                    #machine.set_setName_flag(events[i+1].postback.data)
+                response = userOnline[index]["state"].advance(event)
 
-        elif userOnline[index]["state"].state=="clockCenter" and (event.message.text=="開始計時"):
-            response = userOnline[index]["state"].cycle(event)
-        else:
-            response = userOnline[index]["state"].advance(event)
-        if response == False:
-            send_text_message(event.reply_token, "Not Entering any State")
-        userOnline[index]["state"].beforeState=userOnline[index]["state"].state
-        i=i+1
+            elif userOnline[index]["state"].state=="clockCenter" and (event.message.text=="開始計時"):
+                response = userOnline[index]["state"].cycle(event)
+            else:
+                response = userOnline[index]["state"].advance(event)
+            if response == False:
+                if event.message.text.find("幹")!=-1 :
+                    send_text_message(event.reply_token, "不可以說髒話歐")
+                else:
+                    send_text_message(event.reply_token, "我...我不知道你在說什麼QQ...請按選單按鈕來和我溝通歐")
+            userOnline[index]["state"].beforeState=userOnline[index]["state"].state
+            i=i+1
+        except Exception as e:
+            send_text_message(event.reply_token, "好像出現了一些問題...請確認格式重新輸入歐")
+            print(e)
     return "OK"
 
 
