@@ -20,22 +20,32 @@ class Controller():
                 print("data is "+str(query))
                 if(self.check_if_fake(query[0],str(timer),query[1])==True):
                     print("It is true!")
-                    self.db.update(query[0],info)
+                    #self.db.update(query[0],info)
                     self.db.create_spot_info(query[0],str(timer))
             return True
         except:
             return False
+        
+
+    def read_location_type(self,cat,data):
+        try:
+            info=self.db.read(cat,data)
+            return info
+        except Exception as e:
+            print(e)
+            return None
     
     def check_if_fake(self,id,get_time,name):
-        print("ckeck if it is fake")
-        lists=self.db.read_table(id)
-        if len(lists)>3:
+        try:
+            print("ckeck if it is fake")
+            lists=self.db.read_table(id)
+            #print("list is "+str(lists))
             box=0
             arr=[]
             timer=0
             k=3600
             tmp=0
-            print("preprocessing")
+            #print("preprocessing")
             clock=get_time.split(":")
             for i in range(3):
                 timer+=int(clock[i])*k
@@ -43,25 +53,32 @@ class Controller():
             print("get time is "+str(timer))
             for data in lists:
                 clock=data[1].split(":")
-                k=3600
+                #print("clock is "+str(clock))
+                k=60*(len(clock)-1)
                 tmp=0
-                for i in range(3):
+                for i in range(len(clock)):
                     box+=int(clock[i])*k
                     tmp+=int(clock[i])*k
                     k=k/60
-                print("add "+str(tmp)+"sec")
+                #print("add "+str(tmp)+"sec")
                 arr.append(tmp)
-            std=np.std(arr,ddof=1)
-            mean=box/len(lists)
-            if timer>(mean+2*std):
-                if self.googleTrends(name,1)== False:
-                    print("It is true!")
-                    return False
-            elif timer<(mean-2*std):
-                if self.googleTrends(name,-1)== False:
-                    print("It is true!")
-                    return False
-        return True
+            if len(lists)>3:
+                std=np.std(arr,ddof=1)
+                mean=box/len(lists)
+                if timer>(mean+2*std):
+                    if self.googleTrends(name,1)== False:
+                        print("It is true!")
+                        return False
+                elif timer<(mean-2*std):
+                    if self.googleTrends(name,-1)== False:
+                        print("It is true!")
+                        return False
+            box+=timer
+            self.db.update(id,box)
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     def send_request(self,pytrend,period=3):
         try:

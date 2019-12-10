@@ -11,7 +11,6 @@ channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 def send_text_message(reply_token, text):
     line_bot_api = LineBotApi(channel_access_token)
     line_bot_api.reply_message(reply_token, TextSendMessage(text=text))
-
     return "OK"
 
 
@@ -34,7 +33,7 @@ def active_send_clock_msg(uid,msg,timer,number,index,fun,get_name):
     start=datetime.datetime.now()
     setTime=datetime.timedelta(hours=start.hour,minutes = start.minute, seconds = start.second)
     line_bot_api = LineBotApi(channel_access_token)
-    time.sleep(timer.seconds*waitRate)
+    time.sleep(timer.seconds*waitRate*3/4)
     name=get_name(index)
     if(name!=None):
         line_bot_api.push_message(uid, TextSendMessage(text=name+msg+" ("+str(setTime)+"設定的號碼牌)"))

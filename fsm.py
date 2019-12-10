@@ -130,6 +130,8 @@ class TocMachine(GraphMachine):
     def on_exit_setTime(self,event):
         content=event.message.text.split(":")
         self.timer=datetime.timedelta(hours=0,minutes = int(content[0]), seconds = int(content[1]))
+        self.clock['time']=self.timer
+        print(event.message.text.split(":"))
         print(event.message.text.split(":"))
         print("Leaving state2")
 
@@ -269,35 +271,64 @@ class TocMachine(GraphMachine):
         if(event.message.text.lower()=='返回'):
             output=self.clockPool[self.setNameFlag]['locationInfo']
             output['spotName']=self.clockPool[self.setNameFlag]['spotName']
-            self.DB.save_location_info(output,self.clockPool[self.setNameFlag]['timer'])
+            saver=threading.Thread(
+                target =  self.DB.save_location_info,
+                args= (output,self.clockPool[self.setNameFlag]['timer'])         
+            )
+            saver.start()    
+            #self.DB.save_location_info(output,self.clockPool[self.setNameFlag]['timer'])
         print("Leaving locationCenter")
     
     def is_going_to_setSpotName(self, event):
-        text = event.message.text
-        print("輸入地點名稱\n")
-        return text.lower() == "輸入地點名稱"
+        try:
+            text = event.message.text
+            print("輸入地點名稱\n")
+            return text.lower() == "輸入地點名稱"
+        except Exception as e:
+            print(e)
+            self.error()  
 
     def on_enter_setSpotName(self, event):
-        reply_token = event.reply_token
-        send_text_message(reply_token, "請輸入該地點的名稱~")
+        try:
+            reply_token = event.reply_token
+            send_text_message(reply_token, "請輸入該地點的名稱~")
+        except Exception as e:
+            print(e)
+            self.error()        
 
     def on_exit_setSpotName(self,event):
-        self.clockPool[self.setNameFlag]['spotName']=event.message.text
-        print("Leaving 輸入地點名稱")
+        try:
+            self.clockPool[self.setNameFlag]['spotName']=event.message.text
+            print("Leaving 輸入地點名稱")
+        except Exception as e:
+            print(e)
+            self.error()
 
     def is_going_to_setLocationInfo(self, event):
-        text = event.message.text
-        print("回傳地理資訊\n")
-        return text.lower() == "回傳地理資訊"
+        try:
+            text = event.message.text
+            print("回傳地理資訊\n")
+            return text.lower() == "回傳地理資訊"
+        except Exception as e:
+            print(e)
+            self.error()
 
     def on_enter_setLocationInfo(self, event):
-        reply_token = event.reply_token
-        send_text_message(reply_token, "回傳該地點的地理資訊~")
+        try:
+            reply_token = event.reply_token
+            send_text_message(reply_token, "回傳該地點的地理資訊~")
+        except Exception as e:
+            print(e)
+            self.error()
 
     def on_exit_setLocationInfo(self,event):
-        self.clockPool[self.setNameFlag]['locationInfo']={
-            'address': event.message.address,
-            'latitude':event.message.latitude,
-            'longitude':event.message.longitude
-        }
-        print("Leaving 輸入地理資訊")
+        try:
+            self.clockPool[self.setNameFlag]['locationInfo']={
+                'address': event.message.address,
+                'latitude':event.message.latitude,
+                'longitude':event.message.longitude
+            }
+            print("Leaving 輸入地理資訊")
+        except Exception as e:
+            print(e)
+            self.error()

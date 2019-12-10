@@ -154,6 +154,7 @@ def get_book_msg(dataArray):
         start=data['clock']['start']
         period=data['clock']['time']
         number=data['number']
+        print(str(data))
         if data['name']!=None:
             name=data['name']
         else:

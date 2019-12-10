@@ -71,6 +71,7 @@ class Model():
         except Exception as e:
             print("Error when query [read]")
             print(e)
+            return None
 
     def read_id(self,typ,value):
         try:
@@ -99,13 +100,13 @@ class Model():
             self._reconnect()
             cursor = self.db.cursor()
         try:    
-            query = "UPDATE pin SET name='%s', address='%s'\
-                ,latitude=%f, longitude=%f WHERE id=%d"% \
-                (newSpot['spotName'], newSpot['address'], newSpot['latitude'], newSpot['longitude'],id)
+            query = "UPDATE pin SET time='%f' WHERE id=%d"% \
+                (newSpot,id)
             cursor.execute(query)
             self.db.commit()
-        except:
-            print("Error when query [update_location]")
+        except Exception as e:
+            print("Error when query [create_table]")
+            print(e)
         
 
     def create_table(self,id,time):
@@ -144,7 +145,7 @@ class Model():
         try:
             query = "SELECT * FROM spot_"+str(id)
             cursor.execute(query)
-            data = cursor.fetchone()
+            data = cursor.fetchall()
             self.db.commit()
             return data
             
