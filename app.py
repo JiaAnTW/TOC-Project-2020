@@ -201,7 +201,7 @@ def webhook_handler():
             userOnline[index]["state"].beforeState=userOnline[index]["state"].state
             i=i+1
         except Exception as e:
-            send_text_message(event.reply_token, "好像出現了一些問題...請確認格式重新輸入歐")
+            active_send_text_msg(event.source.user_id,msg,datetime.timedelta(hours=0,minutes = 0, seconds = 0),{"now":0,"target":0})
             print(e)
             tmp = event
             tmp.message.text="0"
