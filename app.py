@@ -203,6 +203,9 @@ def webhook_handler():
         except Exception as e:
             send_text_message(event.reply_token, "好像出現了一些問題...請確認格式重新輸入歐")
             print(e)
+            tmp = event
+            tmp.message.text="0"
+            userOnline[index]["state"].go_back(event)
     return "OK"
 
 

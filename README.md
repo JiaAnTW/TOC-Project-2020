@@ -6,92 +6,42 @@
 
 A counter that can caculate when turn Line bot based on a finite state machine
 
-More details in the [Slides](https://hackmd.io/@TTW/ToC-2019-Project#) and [FAQ](https://hackmd.io/s/B1Xw7E8kN)
 
 ## Finite State Machine
 ![fsm](./img/fsm.png)
 
-## Usage
-The initial state is set to `user`.
 
-Every time `user` state is triggered to `advance` to another state, it will `go_back` to `user` state after the bot replies corresponding message.
+## Introduction
 
-* user
-	* Input: "go to state1"
-		* Reply: "I'm entering state1"
+一個能大概算還有多久才會輪到你的號碼牌計時器。專案概念為把平常我們排隊領到號碼牌後的「預估行為」用Line bot去取代，並結合有點像是區塊鏈的概念，讓每個人能貢獻「等待時間」，其他人不須預估就能直接使用計時器。
+![fsm](./img/1.jpg)
 
-	* Input: "go to state2"
-		* Reply: "I'm entering state2"
+## Basic feature
+*   計算時間: 給予「換一個號」所需的時間，以及目前輪到的號碼和自己手上的號碼後，程式會自動計算還需要的時間，並在時間剩下1/4的時候回傳訊息提醒你時間快到了。
 
-## Deploy
-Setting to deploy webhooks on Heroku.
+*   自動計時: 你不需要切換到其他App的鬧鐘，只要在一號開始時按下「開始計時」，換號時按下「結束計時」
+![fsm](./img/2.jpg)
+![fsm](./img/3.jpg)
 
-### Heroku CLI installation
+*   多重計時: 在計時的同時可以再設定新的計時器。你也可以擁有多個計時器，給予他們各自的名字。各個計時器間不受彼此影響。![fsm](./img/4.jpg)
+*   修改計時: 計時過程中可隨時修改計時器內容
+*   獨立state: 不同用戶的state不受彼此影響
 
-* [macOS, Windows](https://devcenter.heroku.com/articles/heroku-cli)
+## Advance feature
+*   Database: 使用者可以把自己的計時器和目前所在位置資訊結合，把資料傳送到後端並儲存。後端採MVC架構，資料庫使用MySQL (ClearDB provide by heroku)。
+*   位置資訊的取得和使用: 可以透過輸入地點名稱或地理資訊(Line可以回傳自動偵測的GPS資訊)來回傳地點資訊。在一開始也能用地理資訊來取得資料庫中所有該位置數據的**平均時間**。
 
-or you can use Homebrew (MAC)
-```sh
-brew tap heroku/brew && brew install heroku
-```
+## Why the Idea from Block chain ?
 
-or you can use Snap (Ubuntu 16+)
-```sh
-sudo snap install --classic heroku
-```
+資料庫中單一位置的時間數據回傳值是根據所有其他人提供的數據的**平均時間**。
 
-### Connect to Heroku
+而為了防止惡意提供假數據，當新的資料想要儲存進入資料庫時，會先進入以下步驟:
 
-1. Register Heroku: https://signup.heroku.com
+### 【 Step 1 】判斷是否離群
+若新資料距離舊資料平均的不超過兩個標準差，則認定為真資料並更新資料庫；若超過兩個標準差，則進入下一步。
 
-2. Create Heroku project from website
+### 【 Step 2 】判斷離群資料是否為真
+以**新資料的地點名稱為參數**，呼叫pythrends api。該api會回傳Google 關鍵字在過去7天內該地點的**搜尋熱度趨勢**。 當最近一天的趨勢也是超過「前6天趨勢的平均+-2標準差」時，認定新資料為真，並更新資料庫。反之則不儲存該資料。
 
-3. CLI Login
 
-	`heroku login`
 
-### Upload project to Heroku
-
-1. Add local project to Heroku project
-
-	heroku git:remote -a {HEROKU_APP_NAME}
-
-2. Upload project
-
-	```
-	git add .
-	git commit -m "Add code"
-	git push -f heroku master
-	```
-
-3. Set Environment - Line Messaging API Secret Keys
-
-	```
-	heroku config:set LINE_CHANNEL_SECRET=your_line_channel_secret
-	heroku config:set LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token
-	```
-
-4. Your Project is now running on Heroku!
-
-	url: `{HEROKU_APP_NAME}.herokuapp.com/callback`
-
-	debug command: `heroku logs --tail --app {HEROKU_APP_NAME}`
-
-5. If fail with `pygraphviz` install errors
-
-	run commands below can solve the problems
-	```
-	heroku buildpacks:set heroku/python
-	heroku buildpacks:add --index 1 heroku-community/apt
-	```
-
-	refference: https://hackmd.io/@ccw/B1Xw7E8kN?type=view#Q2-如何在-Heroku-使用-pygraphviz
-
-## Reference
-[Pipenv](https://medium.com/@chihsuan/pipenv-更簡單-更快速的-python-套件管理工具-135a47e504f4) ❤️ [@chihsuan](https://github.com/chihsuan)
-
-[TOC-Project-2019](https://github.com/winonecheng/TOC-Project-2019) ❤️ [@winonecheng](https://github.com/winonecheng)
-
-Flask Architecture ❤️ [@Sirius207](https://github.com/Sirius207)
-
-[Line line-bot-sdk-python](https://github.com/line/line-bot-sdk-python/tree/master/examples/flask-echo)
