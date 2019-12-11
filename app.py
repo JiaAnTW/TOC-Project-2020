@@ -205,7 +205,7 @@ def webhook_handler():
             print(e)
             tmp = event
             tmp.message.text="0"
-            userOnline[index]["state"].go_back(event)
+            userOnline[index]["state"].go_back(tmp)
     return "OK"
 
 
